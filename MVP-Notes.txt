@@ -1,0 +1,121 @@
+PlanMolder – MVP Notes
+======================
+
+Laatste update: 31-12-2025
+
+Doel van deze MVP
+-----------------
+- Een werkende end-to-end demo bouwen:
+  - Frontend: eenvoudige Next.js interface waar een architect projectinfo kan ingeven.
+  - Backend: FastAPI endpoint dat de input ontvangt en een gestructureerd antwoord terugstuurt.
+- Focus ligt nu NIET op perfecte UI/UX, maar op:
+  - Heldere flow.
+  - Duidelijke data-structuur (zodat later een LLM kan worden aangesloten).
+  - Technisch stabiele basis.
+
+Huidige stand van zaken
+-----------------------
+Frontend:
+- Next.js app met een formulier:
+  - Velden: project_name, description, area_m2.
+  - Verstuurd via fetch naar: http://127.0.0.1:8000/api/generate-answers
+- Resultaatsectie toont momenteel dummy-data:
+  - summary
+  - advies
+  - loket_choices.bouwtype
+  - loket_choices.categorie
+- Layout is een basic maar nette MVP:
+  - Links: formulier.
+  - Rechts: resultaat.
+  - Nog geen definitieve branding of UX.
+
+Backend:
+- FastAPI app in Backend/main.py.
+- Endpoint: POST /api/generate-answers
+  - Input model: ProjectInput (project_name, description, area_m2: float).
+  - Response is nu dummy / hard-coded:
+    - summary: f"Samenvatting voor {project_name}"
+    - advies: placeholder tekst
+    - loket_choices: dummy bouwtype + categorie
+- CORS is geconfigureerd voor:
+  - http://localhost:3000
+  - http://127.0.0.1:3000
+- Backend draait lokaal op:
+  - http://127.0.0.1:8000
+  - Met uvicorn main:app --reload --host 127.0.0.1 --port 8000
+
+Logic tree / logic boom – idee
+------------------------------
+- Doel: een "decision tree" bouwen die de architect stap voor stap helpt:
+  - Op basis van input (type project, locatie, oppervlakte, functies, enz.)
+  - Geeft de tool:
+    - Een samenvatting.
+    - Een advies (bv. vergunningsplicht, aandachtspunten).
+    - Een voorstel van categorie / bouwtype voor het omgevingsloket.
+- Deze boom kan later:
+  - De basislogica bevatten die altijd geldt (regels, wetgeving, patronen).
+  - Gecombineerd worden met een LLM:
+    - LLM voor tekstuele uitleg / nuance.
+    - Logic tree voor harde ja/nee-regels en categorie-keuzes.
+
+Waarom de logic tree nog niet is uitgewerkt
+-------------------------------------------
+- Er moet nog duidelijker gedefinieerd worden:
+  - Welke invoervelden verplicht zijn.
+  - Welke variabelen het belangrijkst zijn (bijv. type: woning / handel / industrie).
+  - Hoe de verschillende categorieën in het omgevingsloket precies werken.
+- Daarom is er nu gekozen om eerst:
+  - De end-to-end flow werkend te krijgen.
+  - Een dummy-response te gebruiken met exact de velden die later door de logic tree + LLM gevuld gaan worden.
+
+Wat later moet gebeuren (logic tree)
+------------------------------------
+- Input-space definiëren:
+  - Welke vragen stelt de tool minimaal?
+    - vb. type programma, locatie (stad / gemeente), nieuwbouw vs. verbouwing, aantal units, oppervlakte per functie, enz.
+- Een eerste versie van de decision tree uitschrijven:
+  - Als IF/ELSE-structuur in Python óf als JSON-config.
+  - Bijvoorbeeld:
+    - Als nieuwbouw woongebouw + oppervlakte > X m2 → categorie Y.
+    - Als functiewijziging klein handelspand → categorie Z.
+- De response van /api/generate-answers uitbreiden:
+  - extra velden:
+    - risks
+    - required_documents
+    - permit_likelihood
+    - red_flags
+  - Deze kunnen in eerste instantie dummy zijn, maar met de juiste keys.
+
+Wat al mogelijk is met de huidige MVP
+-------------------------------------
+- Architect kan:
+  - Een project ingeven (naam, beschrijving, oppervlakte).
+  - Meteen een gestructureerd antwoord krijgen (dummy).
+- Developer kan:
+  - Frontend of backend aanpassen en direct end-to-end testen:
+    - Frontend: formulier, layout, labels.
+    - Backend: response-structuur, extra velden, logging.
+- Het systeem is klaar om later:
+  - Een echte LLM-call toe te voegen in generate-answers.
+  - De logic tree stapsgewijs toe te voegen zonder de API te breken.
+
+Checklist – korte termijn
+-------------------------
+[ ] Response-model uitbreiden met toekomstige velden:
+    - risks, required_documents, permit_likelihood, red_flags, ...
+[ ] Basic error handling op frontend:
+    - Loading-state bij submit.
+    - Nette foutmelding als backend niet reageert.
+[ ] Een simpele logging in Backend/main.py voor ontvangen input.
+[ ] Basis README toevoegen:
+    - Hoe backend starten.
+    - Hoe frontend starten.
+    - Welke URL's gebruikt worden.
+
+Checklist – logic tree (later)
+------------------------------
+[ ] Belangrijkste parameters bepalen (per type project).
+[ ] Eerste draft van decision tree op papier / in tekst.
+[ ] Implementatie in Python (if/else of config-gedreven).
+[ ] Unit tests voor een paar voorbeeldcases.
+[ ] Aansluiting met LLM-output (LLM vult teksten, logic tree bewaakt regels).
