@@ -2,7 +2,13 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+import logging
+
 app = FastAPI()
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("loketassistent")
+
 
 # CORS zodat http://localhost:3000 met je API mag praten
 origins = [
@@ -92,18 +98,51 @@ def login_user(body: LoginRequest):
         "access_token": "dummy-token",
     }
 
-@app.post("/api/Loketassistent/generate")
+from typing import List, Optional  # bovenaan bij imports
+
+class LoketassistentResponse(BaseModel):
+    answer: str
+    risks: Optional[List[str]] = None
+    required_documents: Optional[List[str]] = None
+    permit_likelihood: Optional[str] = None
+    red_flags: Optional[List[str]] = None
+    meta: dict | None = None
+
+@app.post("/api/Loketassistent/generate", response_model=LoketassistentResponse)
 def Loketassistent_generate(body: LoketassistentRequest):
+    
+    # simpele logging van input
+    logger.info(
+        "Loketassistent generate called",
+        extra={
+            "project_name": body.project_name,
+            "project_type": body.project_type,
+            "area": body.area,
+        },
+    )
+    
     # later kun je hier bv. user uit token halen
     user = None
 
     answer = dummy_llm_answer(body, user=user)
 
-    return {
-        "answer": answer,
-        "meta": {
+    return LoketassistentResponse(
+        answer=answer,
+        risks=[
+            "Mogelijke parkeerproblematiek in de straat",
+            "Beperkte afstand tot perceelsgrens",
+        ],
+        required_documents=[
+            "Volledig ingevuld omgevingsvergunningsformulier",
+            "Recent uittreksel uit het kadaster",
+        ],
+        permit_likelihood="Waarschijnlijk, mits goede motivering",
+        red_flags=[
+            "Controleer lokale RUP-regels voor bouwhoogte",
+        ],
+        meta={
             "model": "dummy-llm-v0",
             "source": "in-memory",
         },
-    }
+    )
 
